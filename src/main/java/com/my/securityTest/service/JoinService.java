@@ -27,7 +27,7 @@ public class JoinService {
         newUser.setPassword(bCryptPasswordEncoder
                 .encode(joinDto.getPassword()));
         // Role 추가
-        newUser.setRole(UserRole.ROLE_USER);
+        newUser.setRole(UserRole.ROLE_ADMIN);
         // 저장
         userRepository.save(newUser);
     }
