@@ -1,0 +1,85 @@
+1. Thymeleaf 예시 (templates/home.html)
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Security Test</title>
+</head>
+<body>
+<h2>로그인 정보</h2>
+<p th:text="'사용자: ' + ${#authentication.name}"></p>
+<p th:text="'권한: ' + ${#authentication.authorities}"></p>
+<p th:text="'인증여부: ' + ${#authentication.authenticated}"></p>
+
+<hr>
+
+<!-- 인증된 사용자만 버튼 표시 -->
+<div th:if="${#authorization.expression('isAuthenticated()')}">
+    <input type="button" value="수정">
+</div>
+
+<!-- sec:authorize 방식 -->
+<div sec:authorize="isAnonymous()">비회원용 화면</div>
+<div sec:authorize="isAuthenticated()">회원용 화면</div>
+<div sec:authorize="hasRole('ROLE_ADMIN')">관리자만 보이는 화면</div>
+<div sec:authorize="hasAnyRole('ROLE_USER','ROLE_ADMIN')">회원/관리자 공통 화면</div>
+</body>
+</html>
+
+2. SecurityConfig (Spring Boot)
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableMethodSecurity(prePostEnabled = true) // @PreAuthorize 활성화
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/home", "/css/**", "/js/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .defaultSuccessUrl("/home", true)
+                .permitAll()
+            )
+            .logout(logout -> logout.permitAll());
+
+        return http.build();
+    }
+}
+
+3. Controller
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class HomeController {
+
+    @GetMapping("/home")
+    public String home() {
+        return "home"; // home.html
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/userOnly")
+    @ResponseBody
+    public String userOnly() {
+        return "로그인 한 사용자만 접근 가능!";
+    }
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @GetMapping("/adminOnly")
+    @ResponseBody
+    public String adminOnly() {
+        return "관리자 전용 페이지!";
+    }
+}
