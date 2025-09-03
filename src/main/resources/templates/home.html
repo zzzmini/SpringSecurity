@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <title>Security Test</title>
+</head>
+<body>
+<h2>로그인 정보</h2>
+<p th:text="'사용자: ' + ${#authentication.name}"></p>
+<p th:text="'권한: ' + ${#authentication.authorities}"></p>
+<p th:text="'인증여부: ' + ${#authentication.authenticated}"></p>
+
+<hr>
+
+<!-- 인증된 사용자만 버튼 표시 -->
+<div th:if="${#authorization.expression('isAuthenticated()')}">
+  <input type="button" value="수정">
+</div>
+
+<!-- sec:authorize 방식 -->
+<div sec:authorize="isAnonymous()">비회원용 화면</div>
+<div sec:authorize="isAuthenticated()">회원용 화면</div>
+<div sec:authorize="hasRole('ROLE_ADMIN')">관리자만 보이는 화면</div>
+<div sec:authorize="hasAnyRole('ROLE_USER','ROLE_ADMIN')">회원/관리자 공통 화면</div>
+</body>
+</html>
